@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistema de Usuários</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    :root {
+      --bg:       #0d0f14;
+      --surface:  #161923;
+      --border:   #242835;
+      --accent:   #4f8ef7;
+      --accent2:  #7c5cfc;
+      --success:  #3ecf8e;
+      --danger:   #f75f5f;
+      --text:     #e8ecf4;
+      --muted:    #6b7494;
+      --input-bg: #1c2030;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 800px; height: 500px;
+      background: radial-gradient(ellipse, rgba(79,142,247,.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .brand-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      margin-bottom: 12px;
+    }
+    .brand-icon svg { width: 24px; height: 24px; }
+    .brand h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+    .brand p {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 28px 24px;
+    }
+
+    .tabs {
+      display: flex;
+      background: var(--input-bg);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
+      gap: 4px;
+    }
+    .tab {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .875rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .tab.active {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .95rem;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); }
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    .btn {
+      width: 100%;
+      margin-top: 6px;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:hover  { opacity: .9; }
+    .btn:active { transform: scale(.98); }
+
+    .feedback {
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 9px;
+      font-size: .875rem;
+      font-weight: 500;
+      display: none;
+    }
+    .feedback.show { display: block; }
+    .feedback.ok   { background: rgba(62,207,142,.12); color: var(--success); border: 1px solid rgba(62,207,142,.25); }
+    .feedback.err  { background: rgba(247,95,95,.12);  color: var(--danger);  border: 1px solid rgba(247,95,95,.25); }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: .75rem;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    #panel {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+    }
+    #panel.active { display: flex; }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .panel-header h2 { font-size: 1rem; font-weight: 700; }
+    .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      padding: 3px 9px;
+      border-radius: 99px;
+      background: rgba(79,142,247,.15);
+      color: var(--accent);
+      border: 1px solid rgba(79,142,247,.25);
+    }
+
+    .user-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .user-row:last-child { border-bottom: none; }
+    .avatar {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; font-weight: 700; flex-shrink: 0;
+    }
+    .user-info { flex: 1; }
+    .user-name { font-size: .9rem; font-weight: 600; }
+    .user-meta {
+      font-size: .75rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 1px;
+    }
+    .delete-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: .75rem;
+      transition: all .2s;
+    }
+    .delete-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+    .empty {
+      text-align: center;
+      padding: 24px 0;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+
+    .logout-link {
+      text-align: center;
+      margin-top: 16px;
+      font-size: .8rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color .2s;
+    }
+    .logout-link:hover { color: var(--text); }
+
+    .section { display: none; }
+    .section.active { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    </div>
+    <h1>Sistema de Usuários</h1>
+    <p>json · localStorage · vanilla js</p>
+  </div>
+
+  <!-- AUTH CARD -->
+  <div class="card" id="auth-card">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Entrar</button>
+      <button class="tab"        onclick="switchTab('register')">Cadastrar</button>
+    </div>
+
+    <!-- Login -->
+    <div class="section active" id="login-section">
+      <div class="form-group">
+        <label>Nome</label>
+        <input type="text" id="login-nome" placeholder="Seu nome" autocomplete="off"/>
+      </div>
+      <div class="form-group">
+        <label>Idade</label>
+        <input type="number" id="login-idade" placeholder="Sua idade" min="1" max="120"/>
+      </div>
+      <button class="btn" onclick="login()">Entrar →</button>
+      <div class="feedback" id="login-feedback"></div>
+      <div class="divider">não tem conta? clique em cadastrar</div>
+    </div>
+
+    <!-- Register -->
+    <div class="section" id="register-section">
+      <div class="form-group">
+        <label>Nome</label>
+        <input type="text" id="reg-nome" placeholder="Escolha um nome" autocomplete="off"/>
+      </div>
+      <div class="form-group">
+        <label>Idade</label>
+        <input type="number" id="reg-idade" placeholder="Sua idade" min="1" max="120"/>
+      </div>
+      <button class="btn" onclick="register()">Cadastrar →</button>
+      <div class="feedback" id="reg-feedback"></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD CARD -->
+  <div class="card" id="dashboard-card" style="display:none">
+    <div class="panel-header">
+      <h2>Usuários cadastrados</h2>
+      <span class="badge" id="user-count">0</span>
+    </div>
+    <div id="panel"></div>
+    <div class="logout-link" onclick="logout()">← Sair da conta</div>
+  </div>
+
+</div>
+
+<script>
+  const DB_KEY = 'usuarios_db';
+
+  function loadUsers() {
+    try { return JSON.parse(localStorage.getItem(DB_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function saveUsers(users) {
+    localStorage.setItem(DB_KEY, JSON.stringify(users));
+  }
+
+  function nextId(users) {
+    return users.length === 0 ? 1 : Math.max(...users.map(u => u.id)) + 1;
+  }
+
+  function validateName(nome) {
+    if (!nome || nome.trim().length < 2) return 'Nome deve ter ao menos 2 caracteres.';
+    if (!/^[a-zA-ZÀ-ú\s]+$/.test(nome.trim())) return 'Nome deve conter apenas letras.';
+    return null;
+  }
+
+  function validateAge(idade) {
+    const n = parseInt(idade);
+    if (isNaN(n) || n < 1 || n > 120) return 'Idade deve ser entre 1 e 120.';
+    return null;
+  }
+
+  function showFeedback(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'feedback show ' + type;
+    setTimeout(() => el.className = 'feedback', 3500);
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) =>
+      t.classList.toggle('active', (i === 0) === (tab === 'login'))
+    );
+    document.getElementById('login-section').classList.toggle('active', tab === 'login');
+    document.getElementById('register-section').classList.toggle('active', tab === 'register');
+  }
+
+  function login() {
+    const nome  = document.getElementById('login-nome').value.trim();
+    const idade = document.getElementById('login-idade').value;
+
+    const errNome  = validateName(nome);
+    const errIdade = validateAge(idade);
+    if (errNome)  return showFeedback('login-feedback', errNome, 'err');
+    if (errIdade) return showFeedback('login-feedback', errIdade, 'err');
+
+    const users = loadUsers();
+    const found = users.find(u =>
+      u.nome.toLowerCase() === nome.toLowerCase() && u.idade === parseInt(idade)
+    );
+
+    if (!found) {
+      showFeedback('login-feedback',
+        'Usuário não encontrado. Verifique nome e idade ou cadastre-se.', 'err');
+      return;
+    }
+
+    sessionStorage.setItem('loggedUser', JSON.stringify(found));
+    openDashboard();
+  }
+
+  function register() {
+    const nome  = document.getElementById('reg-nome').value.trim();
+    const idade = document.getElementById('reg-idade').value;
+
+    const errNome  = validateName(nome);
+    const errIdade = validateAge(idade);
+    if (errNome)  return showFeedback('reg-feedback', errNome, 'err');
+    if (errIdade) return showFeedback('reg-feedback', errIdade, 'err');
+
+    const users = loadUsers();
+    const exists = users.find(u => u.nome.toLowerCase() === nome.toLowerCase());
+    if (exists) {
+      showFeedback('reg-feedback', 'Já existe um usuário com esse nome.', 'err');
+      return;
+    }
+
+    const novo = { id: nextId(users), nome, idade: parseInt(idade) };
+    users.push(novo);
+    saveUsers(users);
+
+    showFeedback('reg-feedback', `Usuário "${nome}" cadastrado com sucesso!`, 'ok');
+    document.getElementById('reg-nome').value = '';
+    document.getElementById('reg-idade').value = '';
+
+    setTimeout(() => switchTab('login'), 1200);
+  }
+
+  function openDashboard() {
+    document.getElementById('auth-card').style.display = 'none';
+    document.getElementById('dashboard-card').style.display = 'block';
+    renderUsers();
+  }
+
+  function renderUsers() {
+    const users = loadUsers();
+    const panel = document.getElementById('panel');
+    document.getElementById('user-count').textContent = users.length;
+
+    if (users.length === 0) {
+      panel.innerHTML = '<div class="empty">Nenhum usuário cadastrado ainda.</div>';
+      return;
+    }
+
+    panel.innerHTML = users.map(u => `
+      <div class="user-row" id="row-${u.id}">
+        <div class="avatar">${u.nome.charAt(0).toUpperCase()}</div>
+        <div class="user-info">
+          <div class="user-name">${u.nome}</div>
+          <div class="user-meta">id:${u.id} · ${u.idade} anos</div>
+        </div>
+        <button class="delete-btn" onclick="deleteUser(${u.id})">remover</button>
+      </div>
+    `).join('');
+  }
+
+  function deleteUser(id) {
+    let users = loadUsers();
+    users = users.filter(u => u.id !== id);
+    saveUsers(users);
+    renderUsers();
+  }
+
+  function logout() {
+    sessionStorage.removeItem('loggedUser');
+    document.getElementById('dashboard-card').style.display = 'none';
+    document.getElementById('auth-card').style.display = 'block';
+    document.getElementById('login-nome').value = '';
+    document.getElementById('login-idade').value = '';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const loginActive = document.getElementById('login-section').classList.contains('active');
+    if (loginActive) login(); else register();
+  });
+
+  if (sessionStorage.getItem('loggedUser')) openDashboard();
+</script>
+</body>
+</html>
