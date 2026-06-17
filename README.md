@@ -1,2 +1,2 @@
 # Sistema-de-login
-Sistema de login baseado em javascript e json
+Sistema de login baseado em Java script
